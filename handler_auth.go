@@ -71,7 +71,7 @@ func authorizeURI(redirectURI string) (string, error) {
 }
 
 func setAuthorizedToken(c *gin.Context, token string) {
-	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", false, true)
+	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", true, true)
 }
 
 func isAuthorized(c *gin.Context) bool {
