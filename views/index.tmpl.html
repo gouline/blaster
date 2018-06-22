@@ -2,11 +2,7 @@
 
     <nav class="navbar navbar-default navbar-static-top navbar-inverse">
         <div class="container">
-            <ul class="nav navbar-nav">
-                <li class="active">
-                    <a href="/"><span class="glyphicon glyphicon-home"></span> Blaster</a>
-                </li>
-            </ul>
+            
             <ul class="nav navbar-nav navbar-right">
                 <li class="navbar-right">
                 {{if .authorized}}
@@ -20,7 +16,7 @@
     </nav>
 
     <div id="container-main" class="container">
-        <h1>Blaster</h1>
+        <h1 class="title-logo"><img class="logo-inline" src="./static/logo.png"/> Blaster</h1>
         <p>Simple tool for sending out announcements.</p>
 
         <hr/>
@@ -49,9 +45,11 @@
             </div>
         </div>
 
+        <div class="footer">Developed by <a href="https://traversal.space">Traversal Space</a>.</div>
+
     </div>
 
-    <script>
+    <script type="application/javascript">
 
         var messageState = {
             queue: [],
@@ -76,8 +74,8 @@
                 .tokenfield({
                     autocomplete: {
                         source: "/api/suggest",
-                        minLength: 3,
-                        delay: 500
+                        minLength: 1,
+                        delay: 300
                     },
                     showAutocompleteOnFocus: true
                 });

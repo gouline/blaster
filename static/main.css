@@ -13,3 +13,34 @@ textarea {
 .action-progress {
     margin-top: 20px;
 }
+
+.title-logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-inline {
+    width: 32px;
+    height: 32px;
+    border-radius: 3px;
+    margin-right: 10px;
+}
+
+.footer {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: block;
+    opacity: .5;
+    text-align: center;
+    font-size: 10pt;
+    color: #595b5c;
+}
+
+.footer a {
+    color: #090b0c;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}

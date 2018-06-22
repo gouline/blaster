@@ -6,7 +6,7 @@ install: clean
 	go build
 
 run: install
-	GIN_MODE=release PORT=5000 ./$(CMD)
+	GIN_MODE=debug PORT=5000 ./$(CMD)
 
 clean:
 	rm -f ./$(CMD)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,7 +24,6 @@ var (
 		"users:read",
 		"usergroups:read",
 		"im:write",
-		"chat:write:user",
 		"chat:write:bot",
 	}
 )
@@ -39,13 +39,15 @@ func handleAuthInitiate(c *gin.Context) {
 func handleAuthComplete(c *gin.Context) {
 	code := c.Query("code")
 
-	response, err := slack.GetOAuthResponse(slackClientID, slackClientSecret, code, relativeURI(c, "/auth/complete"), false)
-	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
-		return
-	}
+	if code != "" {
+		response, err := slack.GetOAuthResponse(slackClientID, slackClientSecret, code, relativeURI(c, "/auth/complete"), false)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, err)
+			return
+		}
 
-	setAuthorizedToken(c, response.AccessToken)
+		setAuthorizedToken(c, response.AccessToken)
+	}
 
 	c.Redirect(http.StatusSeeOther, relativeURI(c, "/"))
 }
@@ -71,7 +73,7 @@ func authorizeURI(redirectURI string) (string, error) {
 }
 
 func setAuthorizedToken(c *gin.Context, token string) {
-	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", true, true)
+	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", !isDebugging, true)
 }
 
 func isAuthorized(c *gin.Context) bool {
@@ -82,6 +84,16 @@ func isAuthorized(c *gin.Context) bool {
 func authorizedToken(c *gin.Context) string {
 	token, _ := c.Cookie(cookiePrefix + "slacktoken")
 	return token
+}
+
+func authorizedTokenHashed(c *gin.Context) string {
+	token := authorizedToken(c)
+	if token != "" {
+		h := sha1.New()
+		h.Write([]byte(token))
+		return fmt.Sprintf("%x", h.Sum(nil))
+	}
+	return ""
 }
 
 func slackAPI(c *gin.Context) (*slack.Client, error) {

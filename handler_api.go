@@ -1,12 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nlopes/slack"
 )
+
+var suggestCache = cache.New(5*time.Minute, 10*time.Minute)
 
 func handleAPISuggest(c *gin.Context) {
 	api, err := slackAPI(c)
@@ -17,33 +23,48 @@ func handleAPISuggest(c *gin.Context) {
 
 	term := strings.ToLower(c.Query("term"))
 
-	// Get all users
-	users, err := api.GetUsers()
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+	var allSuggestions []suggestion
 
-	// Filter users by term
-	suggestions := []suggestion{}
-	for _, user := range users {
-		id := user.ID
-		realName := user.Profile.RealName
-		displayName := user.Profile.DisplayName
+	cacheKey := authorizedTokenHashed(c)
+	cached, found := suggestCache.Get(cacheKey)
+	if found {
+		// Retrieve from cache
+		allSuggestions = cached.([]suggestion)
+	} else {
+		// Get all users
+		users, err := api.GetUsers()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-		if strings.Contains(strings.ToLower(realName), term) ||
-			strings.Contains(strings.ToLower(displayName), term) {
+		allSuggestions = []suggestion{}
+
+		for _, user := range users {
+			realName := user.Profile.RealName
+			displayName := user.Profile.DisplayName
 
 			label := realName
 			if label == "" {
 				label = displayName
 			}
 
-			suggestions = append(suggestions, suggestion{
-				Type:  "user",
-				Label: label,
-				Value: id,
+			allSuggestions = append(allSuggestions, suggestion{
+				Type:   "user",
+				Label:  label,
+				Value:  user.ID,
+				Search: fmt.Sprintf("%s %s", strings.ToLower(realName), strings.ToLower(displayName)),
 			})
+		}
+
+		suggestCache.Set(cacheKey, allSuggestions, cache.DefaultExpiration)
+	}
+
+	// Filter users by term
+	suggestions := []suggestion{}
+	for _, suggestion := range allSuggestions {
+		if strings.Contains(suggestion.Search, term) {
+			suggestions = append(suggestions, suggestion)
 		}
 	}
 
@@ -85,9 +106,10 @@ func handleAPISend(c *gin.Context) {
 }
 
 type suggestion struct {
-	Type  string `json:"type"`
-	Label string `json:"label"`
-	Value string `json:"value"`
+	Type   string `json:"type"`
+	Label  string `json:"label"`
+	Value  string `json:"value"`
+	Search string `json:"-"`
 }
 
 type sendRequest struct {

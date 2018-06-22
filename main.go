@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	appName = "Blaster"
-
+	appName      = "Blaster"
 	cookiePrefix = "blaster_"
 )
+
+var isDebugging = gin.IsDebugging()
 
 func main() {
 	port := os.Getenv("PORT")
