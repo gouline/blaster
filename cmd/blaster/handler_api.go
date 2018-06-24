@@ -34,17 +34,16 @@ func handleAPISuggest(c *gin.Context) {
 		suggestions = []suggestion{}
 
 		for _, user := range users {
+			if user.Deleted || user.IsBot {
+				continue
+			}
+
 			realName := user.Profile.RealName
 			displayName := user.Profile.DisplayName
 
-			label := realName
-			if label == "" {
-				label = displayName
-			}
-
 			suggestions = append(suggestions, suggestion{
 				Type:   "user",
-				Label:  label,
+				Label:  fmt.Sprintf("%s (%s)", realName, displayName),
 				Value:  user.ID,
 				Search: fmt.Sprintf("%s %s", strings.ToLower(realName), strings.ToLower(displayName)),
 			})
