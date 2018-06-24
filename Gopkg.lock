@@ -3,8 +3,26 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/foolin/gin-template"
+  name = "github.com/GeertJohan/go.rice"
+  packages = [
+    ".",
+    "embedded"
+  ]
+  revision = "c02ca9a983da5807ddf7d796784928f5be4afd09"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/daaku/go.zipexe"
   packages = ["."]
+  revision = "a5fe2436ffcb3236e175e5149162b41cd28bd27d"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/foolin/gin-template"
+  packages = [
+    ".",
+    "supports/gorice"
+  ]
   revision = "089e62d1d723b168b89e8dbb0e823228b7366358"
 
 [[projects]]
@@ -45,6 +63,12 @@
   revision = "ac090dc823c1bfdd62ec2957f6d92f9aa923aa69"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/kardianos/osext"
+  packages = ["."]
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
+
+[[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
@@ -55,6 +79,12 @@
   packages = ["."]
   revision = "8ab4d0b364ef1e9af5d102531da20d5ec902b6c4"
   version = "v0.2.0"
+
+[[projects]]
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
 
 [[projects]]
   name = "github.com/ugorji/go"
@@ -83,6 +113,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "58e1ba029d96c803eb2e5f82f3b42764adae5427fa86c12914ac2edebe0324e7"
+  inputs-digest = "6a44c5ffc457c7bb9076fc4a97c792ee7e8b7a7ca35a4bbb64174b624dcec73a"
   solver-name = "gps-cdcl"
   solver-version = 1

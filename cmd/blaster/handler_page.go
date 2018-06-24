@@ -13,6 +13,19 @@ import (
 var teamCache = scache.New(12*time.Hour, 12*time.Hour)
 
 func handleIndex(c *gin.Context) {
+	c.HTML(http.StatusOK, "index", baseH(c, gin.H{
+		"title": appName,
+	}))
+}
+
+func handleNotFound(c *gin.Context) {
+	c.HTML(http.StatusNotFound, "error", baseH(c, gin.H{
+		"title":   "404 Not Found",
+		"message": "Unfortunately, this page doesn’t seem to exist. Are you sure about that URL?",
+	}))
+}
+
+func baseH(c *gin.Context, h gin.H) gin.H {
 	authorized := false
 	teamName := ""
 
@@ -35,9 +48,8 @@ func handleIndex(c *gin.Context) {
 		}
 	}
 
-	c.HTML(http.StatusOK, "index", gin.H{
-		"title":      appName,
-		"authorized": authorized,
-		"teamName":   teamName,
-	})
+	h["authorized"] = authorized
+	h["teamName"] = teamName
+
+	return h
 }

@@ -1,22 +1,6 @@
 {{define "content"}}
 
-    <nav class="navbar navbar-default navbar-static-top navbar-inverse">
-        <div class="container">
-            
-            <ul class="nav navbar-nav navbar-right">
-                <li class="navbar-right">
-                {{if .authorized}}
-                    <a href="/auth/logout"><span class="glyphicon glyphicon-user"></span> Logout <i>({{.teamName}})</i></a>
-                {{else}}
-                    <a href="/auth/initiate"><span class="glyphicon glyphicon-user"></span> Authorize</a>
-                {{end}}
-                </li>
-            </ul>
-        </div>
-    </nav>
-
     <div id="container-main" class="container">
-        <h1 class="title-logo"><img class="logo-inline" src="./static/logo.png"/> Blaster</h1>
         <p>Simple tool for sending out announcements.</p>
 
         <hr/>
@@ -44,9 +28,6 @@
                 7/42
             </div>
         </div>
-
-        <div class="footer">Developed by <a href="https://traversal.space">Traversal Space</a>.</div>
-
     </div>
 
     <script type="application/javascript">
