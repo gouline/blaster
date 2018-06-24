@@ -2,10 +2,21 @@ textarea {
     resize: vertical;
 }
 
+.brand {
+    display: flex;
+    align-items: center;
+}
+
+.logo-inline {
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
 .not-authorized {
     display: block;
     background-color: #fafafa;
-    border: 1px solid #eee;
     padding: 20px;
     text-align: center;
 }
@@ -14,21 +25,9 @@ textarea {
     margin-top: 20px;
 }
 
-.title-logo {
-    display: flex;
-    align-items: center;
-}
-
-.logo-inline {
-    width: 32px;
-    height: 32px;
-    border-radius: 3px;
-    margin-right: 10px;
-}
-
 .footer {
-    margin-top: 15px;
-    margin-bottom: 15px;
+    margin-top: 25px;
+    margin-bottom: 25px;
     display: block;
     opacity: .5;
     text-align: center;

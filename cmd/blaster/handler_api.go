@@ -6,39 +6,32 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickmn/go-cache"
-
 	"github.com/gin-gonic/gin"
 	"github.com/nlopes/slack"
+	"github.com/traversals/blaster/pkg/scache"
 )
 
-var suggestCache = cache.New(5*time.Minute, 10*time.Minute)
+var suggestCache = scache.New(5*time.Minute, 10*time.Minute)
 
 func handleAPISuggest(c *gin.Context) {
-	api, err := slackAPI(c)
-	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+	token := authorizedToken(c)
+	if token == "" {
+		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
 		return
 	}
 
-	term := strings.ToLower(c.Query("term"))
+	cacheResponse := <-suggestCache.ResponseChan(hashedToken(token), func(key string) (interface{}, error) {
+		client := slack.New(token)
 
-	var allSuggestions []suggestion
+		var suggestions []suggestion
 
-	cacheKey := authorizedTokenHashed(c)
-	cached, found := suggestCache.Get(cacheKey)
-	if found {
-		// Retrieve from cache
-		allSuggestions = cached.([]suggestion)
-	} else {
 		// Get all users
-		users, err := api.GetUsers()
+		users, err := client.GetUsers()
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
+			return nil, err
 		}
 
-		allSuggestions = []suggestion{}
+		suggestions = []suggestion{}
 
 		for _, user := range users {
 			realName := user.Profile.RealName
@@ -49,7 +42,7 @@ func handleAPISuggest(c *gin.Context) {
 				label = displayName
 			}
 
-			allSuggestions = append(allSuggestions, suggestion{
+			suggestions = append(suggestions, suggestion{
 				Type:   "user",
 				Label:  label,
 				Value:  user.ID,
@@ -57,10 +50,17 @@ func handleAPISuggest(c *gin.Context) {
 			})
 		}
 
-		suggestCache.Set(cacheKey, allSuggestions, cache.DefaultExpiration)
+		return suggestions, nil
+	})
+	if cacheResponse.Error != nil {
+		c.AbortWithError(http.StatusInternalServerError, cacheResponse.Error)
+		return
 	}
 
+	allSuggestions := cacheResponse.Value.([]suggestion)
+
 	// Filter users by term
+	term := strings.ToLower(c.Query("term"))
 	suggestions := []suggestion{}
 	for _, suggestion := range allSuggestions {
 		if strings.Contains(suggestion.Search, term) {
@@ -72,29 +72,31 @@ func handleAPISuggest(c *gin.Context) {
 }
 
 func handleAPISend(c *gin.Context) {
-	api, err := slackAPI(c)
-	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+	token := authorizedToken(c)
+	if token == "" {
+		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
 		return
 	}
 
+	client := slack.New(token)
+
 	// Bind JSON request
 	var request sendRequest
-	err = c.BindJSON(&request)
+	err := c.BindJSON(&request)
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	// Open/get channel by user ID
-	_, _, channelID, err := api.OpenIMChannel(request.User)
+	_, _, channelID, err := client.OpenIMChannel(request.User)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	// Post message to opened channel
-	_, _, err = api.PostMessage(channelID, request.Message, slack.PostMessageParameters{
+	_, _, err = client.PostMessage(channelID, request.Message, slack.PostMessageParameters{
 		AsUser: false,
 	})
 	if err != nil {

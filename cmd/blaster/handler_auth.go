@@ -76,30 +76,17 @@ func setAuthorizedToken(c *gin.Context, token string) {
 	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", !isDebugging, true)
 }
 
-func isAuthorized(c *gin.Context) bool {
-	token, err := c.Cookie(cookiePrefix + "slacktoken")
-	return token != "" && err == nil
-}
-
 func authorizedToken(c *gin.Context) string {
 	token, _ := c.Cookie(cookiePrefix + "slacktoken")
 	return token
 }
 
-func authorizedTokenHashed(c *gin.Context) string {
-	token := authorizedToken(c)
-	if token != "" {
-		h := sha1.New()
-		h.Write([]byte(token))
-		return fmt.Sprintf("%x", h.Sum(nil))
-	}
-	return ""
+func isAuthorized(c *gin.Context) bool {
+	return authorizedToken(c) != ""
 }
 
-func slackAPI(c *gin.Context) (*slack.Client, error) {
-	token := authorizedToken(c)
-	if token == "" {
-		return nil, fmt.Errorf("access token not found")
-	}
-	return slack.New(token), nil
+func hashedToken(token string) string {
+	h := sha1.New()
+	h.Write([]byte(token))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
