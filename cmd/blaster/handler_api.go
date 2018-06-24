@@ -41,9 +41,15 @@ func handleAPISuggest(c *gin.Context) {
 			realName := user.Profile.RealName
 			displayName := user.Profile.DisplayName
 
+			// Format label based on availability
+			label := realName
+			if displayName != "" {
+				label += " (" + displayName + ")"
+			}
+
 			suggestions = append(suggestions, suggestion{
 				Type:   "user",
-				Label:  fmt.Sprintf("%s (%s)", realName, displayName),
+				Label:  label,
 				Value:  user.ID,
 				Search: fmt.Sprintf("%s %s", strings.ToLower(realName), strings.ToLower(displayName)),
 			})
@@ -64,6 +70,9 @@ func handleAPISuggest(c *gin.Context) {
 	for _, suggestion := range allSuggestions {
 		if strings.Contains(suggestion.Search, term) {
 			suggestions = append(suggestions, suggestion)
+			if len(suggestions) == 10 {
+				break
+			}
 		}
 	}
 
