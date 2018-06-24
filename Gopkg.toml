@@ -4,16 +4,12 @@
 # for detailed Gopkg.toml documentation.
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/foolin/gin-template"
-
-[[constraint]]
   name = "github.com/gin-gonic/gin"
   version = "1.2.0"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/heroku/x"
+  name = "github.com/foolin/gin-template"
 
 [[constraint]]
   name = "github.com/nlopes/slack"
@@ -25,7 +21,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/GeertJohan/go.rice"
+  name = "github.com/heroku/x"
 
 [prune]
   go-tests = true

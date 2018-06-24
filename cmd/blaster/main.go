@@ -4,9 +4,7 @@ import (
 	"log"
 	"os"
 
-	rice "github.com/GeertJohan/go.rice"
 	gintemplate "github.com/foolin/gin-template"
-	"github.com/foolin/gin-template/supports/gorice"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 )
@@ -25,23 +23,21 @@ func main() {
 		log.Printf("$PORT must be set, defaulting to %s", port)
 	}
 
-	projectRoot := "../.."
-
 	router := gin.Default()
 
 	// Templates
-	router.HTMLRender = gorice.NewWithConfig(rice.MustFindBox(projectRoot+"/views"), gintemplate.TemplateConfig{
+	router.HTMLRender = gintemplate.New(gintemplate.TemplateConfig{
 		Root:      "views",
 		Extension: ".tmpl.html",
 		Master:    "layouts/master",
 	})
 
 	// Static
-	router.StaticFS("/static", rice.MustFindBox(projectRoot+"/static").HTTPBox())
+	router.Static("/static", "static")
+	router.NoRoute(handleNotFound)
 
 	// Page
 	router.GET("/", handleIndex)
-	router.NoRoute(handleNotFound)
 
 	// Auth
 	authGroup := router.Group("/auth")

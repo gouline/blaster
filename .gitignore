@@ -1,4 +1,4 @@
 .env
 .docker_build/
-/blaster
+/bin
 

@@ -3,26 +3,8 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/GeertJohan/go.rice"
-  packages = [
-    ".",
-    "embedded"
-  ]
-  revision = "c02ca9a983da5807ddf7d796784928f5be4afd09"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/daaku/go.zipexe"
-  packages = ["."]
-  revision = "a5fe2436ffcb3236e175e5149162b41cd28bd27d"
-
-[[projects]]
-  branch = "master"
   name = "github.com/foolin/gin-template"
-  packages = [
-    ".",
-    "supports/gorice"
-  ]
+  packages = ["."]
   revision = "089e62d1d723b168b89e8dbb0e823228b7366358"
 
 [[projects]]
@@ -61,12 +43,6 @@
     "hmetrics/onload"
   ]
   revision = "ac090dc823c1bfdd62ec2957f6d92f9aa923aa69"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/kardianos/osext"
-  packages = ["."]
-  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -113,6 +89,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6a44c5ffc457c7bb9076fc4a97c792ee7e8b7a7ca35a4bbb64174b624dcec73a"
+  inputs-digest = "d49ce66da8e75cc842383365e6bca1a88c9481c93f7eebb21767f8310cb089f1"
   solver-name = "gps-cdcl"
   solver-version = 1
