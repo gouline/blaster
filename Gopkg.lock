@@ -51,10 +51,10 @@
   version = "v0.0.3"
 
 [[projects]]
-  name = "github.com/nlopes/slack"
+  branch = "master"
+  name = "github.com/mgouline/slack"
   packages = ["."]
-  revision = "8ab4d0b364ef1e9af5d102531da20d5ec902b6c4"
-  version = "v0.2.0"
+  revision = "eddb53c1bbeefa00a80fc37b88a0b41c3dad2c54"
 
 [[projects]]
   name = "github.com/patrickmn/go-cache"
@@ -89,6 +89,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d49ce66da8e75cc842383365e6bca1a88c9481c93f7eebb21767f8310cb089f1"
+  inputs-digest = "74d10701fe61f6827c0cb9acce6cca27144055712df40c2d4a667c29b7b4ff47"
   solver-name = "gps-cdcl"
   solver-version = 1

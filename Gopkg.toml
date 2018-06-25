@@ -12,8 +12,8 @@
   name = "github.com/foolin/gin-template"
 
 [[constraint]]
-  name = "github.com/nlopes/slack"
-  version = "0.2.0"
+  branch = "master"
+  name = "github.com/mgouline/slack"
 
 [[constraint]]
   name = "github.com/patrickmn/go-cache"

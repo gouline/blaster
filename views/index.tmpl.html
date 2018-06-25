@@ -38,12 +38,31 @@
         };
 
         $(function() {
-            $("#recipients-field")
+            var recipientsField = $("#recipients-field")
                 .on("tokenfield:createtoken", function(e) {
+                    if (e.attrs.type === "usergroup") {
+                        e.preventDefault();
+                        
+                        var field = $(this);
+                        getTokenfieldInput(field).val("");
+
+                        $.each(e.attrs.children, function(index, child) {
+                            field.tokenfield("createToken", child);
+                        });
+
+                        return;
+                    }
+
+                    if (e.attrs.value === e.attrs.label) {
+                        e.preventDefault();
+                        return;
+                    }
+
                     var existingTokens = $(this).tokenfield("getTokens");
                     $.each(existingTokens, function(index, token) {
                         if (token.value === e.attrs.value) {
                             e.preventDefault();
+                            return;
                         }
                     });
                 })
@@ -53,18 +72,32 @@
                     }
                 })
                 .tokenfield({
+                    allowEditing: false,
+                    allowPasting: false,
                     autocomplete: {
                         source: "/api/suggest",
                         minLength: 1,
-                        delay: 200
+                        delay: 200,
+                        focus: function(e, ui) {
+                            e.preventDefault();
+                            $(this).val(ui.item.label);
+                        }
                     },
                     showAutocompleteOnFocus: true
                 });
+
+            getTokenfieldInput(recipientsField).blur(function() { 
+                $(this).val(""); 
+            });
             
             $("#submit-button").click(function() {
                 sendMessage();
             });
         });
+
+        function getTokenfieldInput(field) {
+            return $("#" + $(field).attr("id") + "-tokenfield");
+        }
 
         function sendMessage() {
             var users = $("#recipients-field").val().split(", ");

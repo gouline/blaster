@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nlopes/slack"
+	"github.com/mgouline/slack"
 )
 
 const slackBaseURL = "https://slack.com"
