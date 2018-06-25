@@ -7,14 +7,8 @@ import (
 	gintemplate "github.com/foolin/gin-template"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
+	"github.com/traversals/blaster/internal/pkg/handlers"
 )
-
-const (
-	appName      = "Blaster"
-	cookiePrefix = "blaster_"
-)
-
-var isDebugging = gin.IsDebugging()
 
 func main() {
 	port := os.Getenv("PORT")
@@ -34,25 +28,21 @@ func main() {
 
 	// Static
 	router.Static("/static", "static")
-	router.NoRoute(handleNotFound)
+	router.NoRoute(handlers.NotFound)
 
 	// Page
-	router.GET("/", handleIndex)
+	router.GET("/", handlers.Index)
 
 	// Auth
 	authGroup := router.Group("/auth")
-	authGroup.GET("/initiate", handleAuthInitiate)
-	authGroup.GET("/complete", handleAuthComplete)
-	authGroup.GET("/logout", handleAuthLogout)
+	authGroup.GET("/initiate", handlers.AuthInitiate)
+	authGroup.GET("/complete", handlers.AuthComplete)
+	authGroup.GET("/logout", handlers.AuthLogout)
 
 	// API
 	apiGroup := router.Group("/api")
-	apiGroup.GET("/suggest", handleAPISuggest)
-	apiGroup.POST("/send", handleAPISend)
+	apiGroup.GET("/suggest", handlers.APISuggest)
+	apiGroup.POST("/send", handlers.APISend)
 
 	router.Run(":" + port)
-}
-
-func relativeURI(c *gin.Context, path string) string {
-	return "http://" + c.Request.Host + path
 }

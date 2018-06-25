@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"crypto/sha1"
@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/mgouline/slack"
+	"github.com/traversals/blaster/internal/pkg/config"
+	"github.com/traversals/blaster/internal/pkg/utils"
 )
 
 const slackBaseURL = "https://slack.com"
@@ -28,19 +30,21 @@ var (
 	}
 )
 
-func handleAuthInitiate(c *gin.Context) {
-	redirectURI, err := authorizeURI(relativeURI(c, "/auth/complete"))
+// AuthInitiate handles /auth/initiate.
+func AuthInitiate(c *gin.Context) {
+	redirectURI, err := authorizeURI(utils.RelativeURI(c, "/auth/complete"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	c.Redirect(http.StatusSeeOther, redirectURI)
 }
 
-func handleAuthComplete(c *gin.Context) {
+// AuthComplete handles /auth/complete.
+func AuthComplete(c *gin.Context) {
 	code := c.Query("code")
 
 	if code != "" {
-		response, err := slack.GetOAuthResponse(slackClientID, slackClientSecret, code, relativeURI(c, "/auth/complete"), false)
+		response, err := slack.GetOAuthResponse(slackClientID, slackClientSecret, code, utils.RelativeURI(c, "/auth/complete"), false)
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
@@ -49,13 +53,14 @@ func handleAuthComplete(c *gin.Context) {
 		setAuthorizedToken(c, response.AccessToken)
 	}
 
-	c.Redirect(http.StatusSeeOther, relativeURI(c, "/"))
+	c.Redirect(http.StatusSeeOther, utils.RelativeURI(c, "/"))
 }
 
-func handleAuthLogout(c *gin.Context) {
+// AuthLogout handles /auth/logout.
+func AuthLogout(c *gin.Context) {
 	setAuthorizedToken(c, "")
 
-	c.Redirect(http.StatusSeeOther, relativeURI(c, "/"))
+	c.Redirect(http.StatusSeeOther, utils.RelativeURI(c, "/"))
 }
 
 func authorizeURI(redirectURI string) (string, error) {
@@ -73,11 +78,11 @@ func authorizeURI(redirectURI string) (string, error) {
 }
 
 func setAuthorizedToken(c *gin.Context, token string) {
-	c.SetCookie(cookiePrefix+"slacktoken", token, 86400, "", "", !isDebugging, true)
+	c.SetCookie(config.CookiePrefix+"slacktoken", token, 86400, "", "", !config.IsDebugging, true)
 }
 
 func authorizedToken(c *gin.Context) string {
-	token, _ := c.Cookie(cookiePrefix + "slacktoken")
+	token, _ := c.Cookie(config.CookiePrefix + "slacktoken")
 	return token
 }
 

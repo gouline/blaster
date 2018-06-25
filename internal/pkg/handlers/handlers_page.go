@@ -1,10 +1,11 @@
-package main
+package handlers
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/mgouline/slack"
+	"github.com/traversals/blaster/internal/pkg/config"
 	"github.com/traversals/blaster/internal/pkg/scache"
 
 	"github.com/gin-gonic/gin"
@@ -12,13 +13,15 @@ import (
 
 var teamCache = scache.New(12*time.Hour, 12*time.Hour)
 
-func handleIndex(c *gin.Context) {
+// Index handles /.
+func Index(c *gin.Context) {
 	c.HTML(http.StatusOK, "index", baseH(c, gin.H{
-		"title": appName,
+		"title": config.AppName,
 	}))
 }
 
-func handleNotFound(c *gin.Context) {
+// NotFound handles 404 Not Found errors.
+func NotFound(c *gin.Context) {
 	c.HTML(http.StatusNotFound, "error", baseH(c, gin.H{
 		"title":   "404 Not Found",
 		"message": "Unfortunately, this page doesn’t seem to exist. Are you sure about that URL?",

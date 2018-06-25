@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -14,7 +14,8 @@ import (
 
 var suggestCache = scache.New(5*time.Minute, 10*time.Minute)
 
-func handleAPISuggest(c *gin.Context) {
+// APISuggest handles /api/suggest.
+func APISuggest(c *gin.Context) {
 	token := authorizedToken(c)
 	if token == "" {
 		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
@@ -131,7 +132,8 @@ func handleAPISuggest(c *gin.Context) {
 	c.JSON(http.StatusOK, suggestions)
 }
 
-func handleAPISend(c *gin.Context) {
+// APISend handles /api/send.
+func APISend(c *gin.Context) {
 	token := authorizedToken(c)
 	if token == "" {
 		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
