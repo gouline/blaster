@@ -2,14 +2,17 @@ include .env # Requires SLACK_CLIENT_ID and SLACK_CLIENT_SECRET
 
 CMD=blaster
 
-install: clean
+$(CMD): clean
 	go build -o ./bin/$(CMD) ./cmd/$(CMD)
 
 clean:
 	rm -f ./$(CMD)
 
-run: install
+test: $(CMD)
+	go test -v ./...
+
+run: $(CMD)
 	GIN_MODE=debug PORT=5000 ./bin/$(CMD)
 
-heroku: install
+heroku: $(CMD)
 	heroku local
