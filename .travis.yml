@@ -1,2 +1,4 @@
 language: go
-script: make test
+script: 
+  - cp .env.example .env
+  - make test
