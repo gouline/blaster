@@ -22,7 +22,35 @@ func APISuggest(c *gin.Context) {
 		return
 	}
 
-	cacheResponse := <-suggestCache.ResponseChan(hashedToken(token), func(key string) (interface{}, error) {
+	cacheResponse := <-buildSuggestCache(token)
+	if cacheResponse.Error != nil {
+		c.AbortWithError(http.StatusInternalServerError, cacheResponse.Error)
+		return
+	}
+
+	allSuggestions := cacheResponse.Value.([]suggestion)
+
+	// Filter out all symbols from term
+	symbolReg := utils.NewAllSymbolsRegexp()
+	term := strings.ToLower(" " + c.Query("term"))
+	term = symbolReg.ReplaceAllString(term, "")
+
+	// Filter users by term
+	suggestions := []suggestion{}
+	for _, suggestion := range allSuggestions {
+		if strings.Contains(suggestion.Search, term) {
+			suggestions = append(suggestions, suggestion)
+			if len(suggestions) == 10 {
+				break
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, suggestions)
+}
+
+func buildSuggestCache(token string) <-chan scache.Response {
+	return suggestCache.ResponseChan(hashedToken(token), func(key string) (interface{}, error) {
 		client := slack.New(token)
 
 		symbolReg := utils.NewAllSymbolsRegexp()
@@ -57,10 +85,15 @@ func APISuggest(c *gin.Context) {
 			search := fmt.Sprintf(" %s %s", strings.ToLower(realName), strings.ToLower(displayName))
 			search = symbolReg.ReplaceAllString(search, "")
 
+			// Sanitize labels and values
+			sanitize := func(s string) string {
+				return strings.Replace(s, ",", "", -1)
+			}
+
 			s := suggestion{
 				Type:   "user",
-				Label:  label,
-				Value:  user.ID,
+				Label:  sanitize(label),
+				Value:  sanitize(user.ID),
 				Search: search,
 			}
 
@@ -106,30 +139,6 @@ func APISuggest(c *gin.Context) {
 
 		return suggestions, nil
 	})
-	if cacheResponse.Error != nil {
-		c.AbortWithError(http.StatusInternalServerError, cacheResponse.Error)
-		return
-	}
-
-	allSuggestions := cacheResponse.Value.([]suggestion)
-
-	// Filter out all symbols from term
-	symbolReg := utils.NewAllSymbolsRegexp()
-	term := strings.ToLower(" " + c.Query("term"))
-	term = symbolReg.ReplaceAllString(term, "")
-
-	// Filter users by term
-	suggestions := []suggestion{}
-	for _, suggestion := range allSuggestions {
-		if strings.Contains(suggestion.Search, term) {
-			suggestions = append(suggestions, suggestion)
-			if len(suggestions) == 10 {
-				break
-			}
-		}
-	}
-
-	c.JSON(http.StatusOK, suggestions)
 }
 
 // APISend handles /api/send.

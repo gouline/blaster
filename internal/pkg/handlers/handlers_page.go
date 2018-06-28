@@ -49,6 +49,11 @@ func baseH(c *gin.Context, h gin.H) gin.H {
 		if cacheResponse.Error == nil {
 			teamName = cacheResponse.Value.(string)
 		}
+
+		// Build other caches
+		go func() {
+			_ = <-buildSuggestCache(token)
+		}()
 	}
 
 	h["authorized"] = authorized
