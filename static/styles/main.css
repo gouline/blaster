@@ -27,7 +27,7 @@ textarea {
 
 .footer {
     margin-top: 25px;
-    margin-bottom: 25px;
+    margin-bottom: 50px;
     display: block;
     opacity: .5;
     text-align: center;
@@ -42,4 +42,9 @@ textarea {
 
 .footer a:hover {
     text-decoration: underline;
+}
+
+.footer img {
+    max-height: 14px;
+    vertical-align: middle;
 }
