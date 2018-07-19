@@ -168,7 +168,7 @@ func APISend(c *gin.Context) {
 
 	// Post message to opened channel
 	_, _, err = client.PostMessage(channelID, request.Message, slack.PostMessageParameters{
-		AsUser: false,
+		AsUser: request.AsUser,
 	})
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
@@ -189,4 +189,5 @@ type suggestion struct {
 type sendRequest struct {
 	User    string `json:"user"`
 	Message string `json:"message"`
+	AsUser  bool   `json:"as_user"`
 }

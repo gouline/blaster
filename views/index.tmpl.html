@@ -1,7 +1,7 @@
 {{define "content"}}
 
 <div id="container-main" class="container">
-    <p>Simple tool for sending out announcements.</p>
+    <p>Simple tool for sending out Slack announcements.</p>
 
     <hr/>
 
@@ -17,9 +17,15 @@
             <textarea id="message-field" class="form-control" rows="10" placeholder="Text of your announcement"></textarea>
         </div>
 
-        <button id="submit-button" type="submit" class="btn btn-primary">
-            <span class="glyphicon glyphicon-send"></span> Send
-        </button>
+        <div class="form-group">
+            <button id="submit-button" type="submit" class="btn btn-primary disabled">
+                <span class="glyphicon glyphicon-send"></span> Send
+            </button>
+            &nbsp;
+            <label class="checkbox-inline">
+                <input type="checkbox" id="as-user-check"> as a user (<a class="tooltip-link" data-toggle="tooltip" data-placement="top" title="Sent as a bot by default.">?</a>)
+            </label>
+        </div>
     </div>
     {{else}}
     <span class="not-authorized"><b>Not authorized.</b> The form is only available when authorized against Slack API.</span>
@@ -27,7 +33,7 @@
 
     <div id="progress" class="progress action-progress" style="display: none;">
         <div id="progress-bar" class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
-            7/42
+            0/0
         </div>
     </div>
 </div>
@@ -37,10 +43,18 @@
 
     $(function() {
         if ($("#send-form").length > 0) {
+            $('[data-toggle="tooltip"]').each(function() {
+                var a = $(this);
+                var title = a.attr("title");
+                a.attr("title", title.replace(/ /g, '\xa0'));
+            }).tooltip(); 
+
             var recipientsField = $("#recipients-field").on("tokenfield:createtoken", function(e) {
                 blaster.recipientsField.onCreateToken(this, e);
             }).on("tokenfield:createdtoken", function(e) {
                 blaster.recipientsField.onCreatedToken(this, e);
+            }).on('tokenfield:removedtoken', function (e) {
+                blaster.recipientsField.onRemovedToken(this, e);
             }).tokenfield({
                 allowEditing: false,
                 autocomplete: {
@@ -55,11 +69,17 @@
                 showAutocompleteOnFocus: true
             });
 
+            $("#message-field").bind("input propertychange", function() {
+                blaster.checkSubmitState();
+            });
+
             blaster.getTokenfieldInput(recipientsField).focus(function() {
                 blaster.resetFormErrors();
             }).blur(function() { 
                 $(this).val(""); 
             });
+
+            blaster.checkSubmitState();
 
             $("#message-field").focus(function() {
                 blaster.resetFormErrors();

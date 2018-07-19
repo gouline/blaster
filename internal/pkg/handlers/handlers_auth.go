@@ -27,6 +27,7 @@ var (
 		"usergroups:read",
 		"im:write",
 		"chat:write:bot",
+		"chat:write:user",
 	}
 )
 

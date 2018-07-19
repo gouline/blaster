@@ -56,6 +56,7 @@ func baseH(c *gin.Context, h gin.H) gin.H {
 		}()
 	}
 
+	h["debugging"] = config.IsDebugging
 	h["authorized"] = authorized
 	h["teamName"] = teamName
 

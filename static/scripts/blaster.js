@@ -45,7 +45,20 @@ var blaster = {
             if (!e.attrs.type) {
                 $(e.relatedTarget).addClass("invalid");
             }
+
+            blaster.checkSubmitState();
         },
+
+        onRemovedToken: function(tf, e) {
+            blaster.checkSubmitState();
+        },
+    },
+
+    checkSubmitState: function() {
+        var missingUsers = $("#recipients-field").tokenfield("getTokens").length == 0;
+        var missingMessage = $("#message-field").val().length == 0;
+
+        $("#submit-button").toggleClass("disabled", missingUsers || missingMessage);
     },
 
     getPipedValue: function(value) {
@@ -59,7 +72,8 @@ var blaster = {
     sendMessage: function() {
         var users = $("#recipients-field").val().split(", ");
         var message = $("#message-field").val();
-        
+        var asUser = $("#as-user-check").is(":checked");
+
         users = $.map(users, function(u, i) {
             return blaster.getPipedValue(u);
         });
@@ -78,7 +92,11 @@ var blaster = {
         blaster.messageState.queue = [];
         blaster.messageState.count = users.length;
         for (user of users) {
-            blaster.messageState.queue.push({user: user, message: message});
+            blaster.messageState.queue.push({
+                user: user, 
+                message: message,
+                as_user: asUser
+            });
         }
 
         blaster.setProgressEnabled(true)

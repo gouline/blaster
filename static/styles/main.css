@@ -48,3 +48,11 @@ textarea {
     max-height: 14px;
     vertical-align: middle;
 }
+
+a.tooltip-link,
+a.tooltip-link:hover {
+    border-bottom: 1px dotted #595b5c;
+    text-decoration: none;
+    color: #595b5c;
+    font-weight: bold;
+}
