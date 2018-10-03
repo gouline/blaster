@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mgouline/slack"
+	"github.com/nlopes/slack"
 	"github.com/traversals/blaster/internal/pkg/config"
 	"github.com/traversals/blaster/internal/pkg/utils"
 )

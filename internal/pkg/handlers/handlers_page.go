@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mgouline/slack"
+	"github.com/nlopes/slack"
 	"github.com/traversals/blaster/internal/pkg/config"
 	"github.com/traversals/blaster/internal/pkg/scache"
 

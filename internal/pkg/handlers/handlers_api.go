@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mgouline/slack"
+	"github.com/nlopes/slack"
 	"github.com/traversals/blaster/internal/pkg/scache"
 	"github.com/traversals/blaster/internal/pkg/utils"
 )
@@ -102,7 +102,7 @@ func buildSuggestCache(token string) <-chan scache.Response {
 			userLookup[user.ID] = s
 		}
 
-		usergroups, err := client.GetUserGroups(true)
+		usergroups, err := client.GetUserGroups(slack.GetUserGroupsOptionIncludeUsers(true))
 
 		for _, usergroup := range usergroups {
 			if !usergroup.IsUserGroup {
