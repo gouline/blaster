@@ -5,7 +5,7 @@
 
 [[constraint]]
   name = "github.com/gin-gonic/gin"
-  version = "1.2.0"
+  version = "1.3.0"
 
 [[constraint]]
   branch = "master"
@@ -13,7 +13,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/mgouline/slack"
+  name = "github.com/nlopes/slack"
 
 [[constraint]]
   name = "github.com/patrickmn/go-cache"
