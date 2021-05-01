@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/nlopes/slack"
-	"github.com/traversals/blaster/internal/pkg/config"
-	"github.com/traversals/blaster/internal/pkg/scache"
+	"github.com/gouline/blaster/internal/pkg/config"
+	"github.com/gouline/blaster/internal/pkg/scache"
 
 	"github.com/gin-gonic/gin"
 )

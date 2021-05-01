@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nlopes/slack"
-	"github.com/traversals/blaster/internal/pkg/scache"
-	"github.com/traversals/blaster/internal/pkg/utils"
+	"github.com/gouline/blaster/internal/pkg/scache"
+	"github.com/gouline/blaster/internal/pkg/utils"
 )
 
 var suggestCache = scache.New(5*time.Minute, 10*time.Minute)

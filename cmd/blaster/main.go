@@ -7,7 +7,7 @@ import (
 	gintemplate "github.com/foolin/gin-template"
 	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
-	"github.com/traversals/blaster/internal/pkg/handlers"
+	"github.com/gouline/blaster/internal/pkg/handlers"
 )
 
 func main() {

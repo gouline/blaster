@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nlopes/slack"
-	"github.com/traversals/blaster/internal/pkg/config"
-	"github.com/traversals/blaster/internal/pkg/utils"
+	"github.com/gouline/blaster/internal/pkg/config"
+	"github.com/gouline/blaster/internal/pkg/utils"
 )
 
 const slackBaseURL = "https://slack.com"
