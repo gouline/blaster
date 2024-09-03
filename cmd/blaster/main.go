@@ -1,16 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	gintemplate "github.com/foolin/gin-template"
 	"github.com/gin-gonic/gin"
-	_ "github.com/heroku/x/hmetrics/onload"
 	"github.com/gouline/blaster/internal/pkg/handlers"
 )
 
 func main() {
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "0.0.0.0"
+		log.Printf("$HOST can be set, defaulting to %s", host)
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5000"
@@ -44,5 +50,5 @@ func main() {
 	apiGroup.GET("/suggest", handlers.APISuggest)
 	apiGroup.POST("/send", handlers.APISend)
 
-	router.Run(":" + port)
+	router.Run(fmt.Sprintf("%s:%s", host, port))
 }

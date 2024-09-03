@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nlopes/slack"
 	"github.com/gouline/blaster/internal/pkg/config"
 	"github.com/gouline/blaster/internal/pkg/utils"
+	"github.com/slack-go/slack"
 )
 
 const slackBaseURL = "https://slack.com"
@@ -45,7 +45,7 @@ func AuthComplete(c *gin.Context) {
 	code := c.Query("code")
 
 	if code != "" {
-		response, err := slack.GetOAuthResponse(slackClientID, slackClientSecret, code, utils.RelativeURI(c, "/auth/complete"), false)
+		response, err := slack.GetOAuthResponse(http.DefaultClient, slackClientID, slackClientSecret, code, utils.RelativeURI(c, "/auth/complete"))
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
@@ -85,10 +85,6 @@ func setAuthorizedToken(c *gin.Context, token string) {
 func authorizedToken(c *gin.Context) string {
 	token, _ := c.Cookie(config.CookiePrefix + "slacktoken")
 	return token
-}
-
-func isAuthorized(c *gin.Context) bool {
-	return authorizedToken(c) != ""
 }
 
 func hashedToken(token string) string {
