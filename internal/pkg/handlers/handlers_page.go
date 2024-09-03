@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nlopes/slack"
 	"github.com/gouline/blaster/internal/pkg/config"
 	"github.com/gouline/blaster/internal/pkg/scache"
+	"github.com/slack-go/slack"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,7 +52,7 @@ func baseH(c *gin.Context, h gin.H) gin.H {
 
 		// Build other caches
 		go func() {
-			_ = <-buildSuggestCache(token)
+			<-buildSuggestCache(token)
 		}()
 	}
 

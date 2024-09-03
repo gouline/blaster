@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nlopes/slack"
 	"github.com/gouline/blaster/internal/pkg/scache"
 	"github.com/gouline/blaster/internal/pkg/utils"
+	"github.com/slack-go/slack"
 )
 
 var suggestCache = scache.New(5*time.Minute, 10*time.Minute)
@@ -103,6 +103,9 @@ func buildSuggestCache(token string) <-chan scache.Response {
 		}
 
 		usergroups, err := client.GetUserGroups(slack.GetUserGroupsOptionIncludeUsers(true))
+		if err != nil {
+			return nil, err
+		}
 
 		for _, usergroup := range usergroups {
 			if !usergroup.IsUserGroup {
@@ -160,16 +163,22 @@ func APISend(c *gin.Context) {
 	}
 
 	// Open/get channel by user ID
-	_, _, channelID, err := client.OpenIMChannel(request.User)
+	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
+		Users: []string{
+			request.User,
+		},
+	})
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	// Post message to opened channel
-	_, _, err = client.PostMessage(channelID, request.Message, slack.PostMessageParameters{
-		AsUser: request.AsUser,
-	})
+	_, _, err = client.PostMessage(
+		channel.ID,
+		slack.MsgOptionText(request.Message, false),
+		slack.MsgOptionAsUser(request.AsUser),
+	)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

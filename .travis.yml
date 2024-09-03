@@ -1,4 +1,0 @@
-language: go
-script: 
-  - cp .env.example .env
-  - make test
