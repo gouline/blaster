@@ -1,10 +1,11 @@
-package utils
+package format
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 func TestNewAllSymbolsRegexp(t *testing.T) {
@@ -24,12 +25,12 @@ func TestNewAllSymbolsRegexp(t *testing.T) {
 }
 
 func TestRelativeURI(t *testing.T) {
-	ctx := &gin.Context{
-		Request: &http.Request{
-			Host: "test.example.com",
-		},
-	}
-	if RelativeURI(ctx, "/context/path") != "http://test.example.com/context/path" {
-		t.Errorf("Unexpected relative URI")
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "https://test.example.com/", nil)
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	if actual := RelativeURI(c, "/context/path"); actual != "https://test.example.com/context/path" {
+		t.Errorf("Unexpected relative URI: %s", actual)
 	}
 }
