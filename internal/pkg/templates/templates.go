@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
@@ -16,21 +17,26 @@ type Templates struct {
 
 // NewRenderer creates new renderer and parses templates directory recursively
 // Relative path including extension is used as template name.
-func NewTemplates(root string, layout string) (*Templates, error) {
+func New(root string, layout string) (*Templates, error) {
 	t := &Templates{
 		templates: map[string]*template.Template{},
 	}
 
-	basePath := root + "/" + layout
+	if _, err := os.Stat(root); os.IsNotExist(err) {
+		return t, err
+	}
+
+	layoutPath := root + "/" + layout
+	layoutExt := filepath.Ext(layoutPath)
 
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		name := d.Name()
 
-		if d.IsDir() || name == layout {
+		if d.IsDir() || name == layout || filepath.Ext(path) != layoutExt {
 			return nil
 		}
 
-		t.templates[name] = template.Must(template.ParseFiles(basePath, path))
+		t.templates[name] = template.Must(template.ParseFiles(layoutPath, path))
 
 		return nil
 	})
