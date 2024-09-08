@@ -1,21 +1,14 @@
 include .env # Requires SLACK_CLIENT_ID and SLACK_CLIENT_SECRET
 
-CMD := blaster
+export HOST ?= localhost
+export PORT ?= 4000
+export CERT_FILE ?= certs/localhost.crt
+export KEY_FILE ?= certs/localhost.key
 
-HOST ?= 127.0.0.1
-PORT ?= 5001
+.PHONY: run
+run:
+	DEBUG=1 air
 
-$(CMD): clean
-	go build -o ./bin/$(CMD) ./cmd/$(CMD)
-
-clean:
-	rm -f ./bin/$(CMD)
-
-test: $(CMD)
+.PHONY: test
+test:
 	go test -v ./...
-
-run: $(CMD)
-	GIN_MODE=debug \
-	HOST=$(HOST) \
-	PORT=$(PORT) \
-	./bin/$(CMD)

@@ -1,4 +1,4 @@
-package handlers
+package server
 
 import (
 	"fmt"
@@ -6,33 +6,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gouline/blaster/internal/pkg/format"
 	"github.com/gouline/blaster/internal/pkg/scache"
-	"github.com/gouline/blaster/internal/pkg/utils"
+	"github.com/labstack/echo/v4"
 	"github.com/slack-go/slack"
 )
 
 var suggestCache = scache.New(5*time.Minute, 10*time.Minute)
 
 // APISuggest handles /api/suggest.
-func APISuggest(c *gin.Context) {
-	token := authorizedToken(c)
+func (s *Server) handleAPISuggest(c echo.Context) error {
+	token := s.authorizedToken(c)
 	if token == "" {
-		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
-		return
+		return c.String(http.StatusUnauthorized, "no token")
 	}
 
 	cacheResponse := <-buildSuggestCache(token)
 	if cacheResponse.Error != nil {
-		c.AbortWithError(http.StatusInternalServerError, cacheResponse.Error)
-		return
+		return c.String(http.StatusInternalServerError, cacheResponse.Error.Error())
 	}
 
 	allSuggestions := cacheResponse.Value.([]suggestion)
 
 	// Filter out all symbols from term
-	symbolReg := utils.NewAllSymbolsRegexp()
-	term := strings.ToLower(" " + c.Query("term"))
+	symbolReg := format.NewAllSymbolsRegexp()
+	term := strings.ToLower(" " + c.QueryParam("term"))
 	term = symbolReg.ReplaceAllString(term, "")
 
 	// Filter users by term
@@ -46,14 +44,53 @@ func APISuggest(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, suggestions)
+	return c.JSON(http.StatusOK, suggestions)
+}
+
+// handleAPISend handles /api/send.
+func (s *Server) handleAPISend(c echo.Context) error {
+	token := s.authorizedToken(c)
+	if token == "" {
+		return c.String(http.StatusUnauthorized, "no token")
+	}
+
+	client := slack.New(token)
+
+	// Bind JSON request
+	var request sendRequest
+	err := c.Bind(&request)
+	if err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	// Open/get channel by user ID
+	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
+		Users: []string{
+			request.User,
+		},
+	})
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	// Post message to opened channel
+	_, _, err = client.PostMessage(
+		channel.ID,
+		slack.MsgOptionText(request.Message, false),
+		slack.MsgOptionAsUser(request.AsUser),
+	)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, struct{}{})
 }
 
 func buildSuggestCache(token string) <-chan scache.Response {
-	return suggestCache.ResponseChan(hashedToken(token), func(key string) (interface{}, error) {
+	return suggestCache.ResponseChan(format.HashToken(token), func(key string) (interface{}, error) {
 		client := slack.New(token)
 
-		symbolReg := utils.NewAllSymbolsRegexp()
+		symbolReg := format.NewAllSymbolsRegexp()
 
 		var suggestions []suggestion
 
@@ -142,49 +179,6 @@ func buildSuggestCache(token string) <-chan scache.Response {
 
 		return suggestions, nil
 	})
-}
-
-// APISend handles /api/send.
-func APISend(c *gin.Context) {
-	token := authorizedToken(c)
-	if token == "" {
-		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("no token"))
-		return
-	}
-
-	client := slack.New(token)
-
-	// Bind JSON request
-	var request sendRequest
-	err := c.BindJSON(&request)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	// Open/get channel by user ID
-	channel, _, _, err := client.OpenConversation(&slack.OpenConversationParameters{
-		Users: []string{
-			request.User,
-		},
-	})
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	// Post message to opened channel
-	_, _, err = client.PostMessage(
-		channel.ID,
-		slack.MsgOptionText(request.Message, false),
-		slack.MsgOptionAsUser(request.AsUser),
-	)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, struct{}{})
 }
 
 type suggestion struct {
