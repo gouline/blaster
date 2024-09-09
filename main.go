@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gouline/blaster/internal/pkg/server"
@@ -23,5 +24,5 @@ func main() {
 		panic(fmt.Sprintf("Failed to create server: %s", err))
 	}
 
-	s.Run()
+	log.Fatal(s.Run())
 }
