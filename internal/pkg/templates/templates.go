@@ -9,39 +9,62 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
+type Config struct {
+	Logger *zap.Logger
+
+	RootPath   string
+	LayoutFile string
+}
+
 type Templates struct {
+	config    Config
 	templates map[string]*template.Template
 }
 
 // NewRenderer creates new renderer and parses templates directory recursively
 // Relative path including extension is used as template name.
-func New(root string, layout string) (*Templates, error) {
+func New(config Config) (*Templates, error) {
 	t := &Templates{
+		config:    config,
 		templates: map[string]*template.Template{},
 	}
 
-	if _, err := os.Stat(root); os.IsNotExist(err) {
-		return t, err
+	if f, err := os.Stat(config.RootPath); os.IsNotExist(err) {
+		return t, fmt.Errorf("root not found: %w", err)
+	} else if err == nil && !f.IsDir() {
+		return t, fmt.Errorf("root not directory")
 	}
 
-	layoutPath := root + "/" + layout
-	layoutExt := filepath.Ext(layoutPath)
+	layoutPath := config.RootPath + "/" + config.LayoutFile
+	if f, err := os.Stat(layoutPath); os.IsNotExist(err) {
+		return t, fmt.Errorf("layout not found: %w", err)
+	} else if err == nil && f.IsDir() {
+		return t, fmt.Errorf("layout is directory")
+	}
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(config.RootPath, func(path string, d fs.DirEntry, err error) error {
 		name := d.Name()
 
-		if d.IsDir() || name == layout || filepath.Ext(path) != layoutExt {
+		if d.IsDir() || name == config.LayoutFile {
+			return nil
+		} else if filepath.Ext(path) != filepath.Ext(layoutPath) {
+			t.config.Logger.Info("discarding template", zap.String("path", path))
 			return nil
 		}
 
 		t.templates[name] = template.Must(template.ParseFiles(layoutPath, path))
+		t.config.Logger.Info("compiled template", zap.String("path", path))
 
 		return nil
 	})
+	if err != nil {
+		return t, fmt.Errorf("failed to walk root: %w", err)
+	}
 
-	return t, err
+	return t, nil
 }
 
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {

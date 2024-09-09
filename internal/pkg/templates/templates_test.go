@@ -3,10 +3,16 @@ package templates
 import (
 	"net/http/httptest"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func Test_New(t *testing.T) {
-	templates, err := New("examples", "layout.html")
+	templates, err := New(Config{
+		Logger:     zap.Must(zap.NewDevelopment()),
+		RootPath:   "examples",
+		LayoutFile: "layout.html",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}

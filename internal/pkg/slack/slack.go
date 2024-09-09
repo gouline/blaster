@@ -1,11 +1,13 @@
 package slack
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 const (
@@ -24,16 +26,27 @@ var (
 	}
 )
 
-type Slack struct {
-	clientID     string
-	clientSecret string
+type Config struct {
+	Logger *zap.Logger
+
+	ClientID     string
+	ClientSecret string
 }
 
-func New(clientID, clientSecret string) *Slack {
-	return &Slack{
-		clientID:     clientID,
-		clientSecret: clientSecret,
+type Slack struct {
+	config Config
+}
+
+func New(config Config) (*Slack, error) {
+	s := &Slack{
+		config: config,
 	}
+
+	if config.ClientID == "" || config.ClientSecret == "" {
+		return s, fmt.Errorf("missing Slack credentials")
+	}
+
+	return s, nil
 }
 
 func (s *Slack) authorizeURI(redirectURI string) (string, error) {
@@ -42,7 +55,7 @@ func (s *Slack) authorizeURI(redirectURI string) (string, error) {
 		return "", err
 	}
 	q := redirectURL.Query()
-	q.Set("client_id", s.clientID)
+	q.Set("client_id", s.config.ClientID)
 	q.Set("scope", strings.Join(scopes, ","))
 	q.Set("redirect_uri", redirectURI)
 	redirectURL.RawQuery = q.Encode()

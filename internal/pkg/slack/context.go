@@ -34,10 +34,10 @@ func (s *Slack) Context(c echo.Context) *Context {
 
 			teamInfo, err := client.GetTeamInfo()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to get team info: %w", err)
 			}
 
-			return teamInfo.Name, err
+			return teamInfo.Name, nil
 		})
 		if cacheResponse.Error == nil {
 			ctx.TeamName = cacheResponse.Value.(string)
@@ -96,7 +96,7 @@ func buildDestinationCache(token string) <-chan scache.Response {
 		// Get all users
 		users, err := client.GetUsers()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get users: %w", err)
 		}
 
 		destinations = []*Destination{}
@@ -119,7 +119,7 @@ func buildDestinationCache(token string) <-chan scache.Response {
 
 		usergroups, err := client.GetUserGroups(slack.GetUserGroupsOptionIncludeUsers(true))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get user groups: %w", err)
 		}
 
 		for _, usergroup := range usergroups {

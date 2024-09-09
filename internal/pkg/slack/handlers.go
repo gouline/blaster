@@ -12,7 +12,7 @@ func (s *Slack) Middleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if code := c.QueryParam("code"); code != "" {
 			redirectURI := redirectURI(c, c.Request().RequestURI)
-			response, err := slack.GetOAuthResponse(http.DefaultClient, s.clientID, s.clientSecret, code, redirectURI)
+			response, err := slack.GetOAuthResponse(http.DefaultClient, s.config.ClientID, s.config.ClientSecret, code, redirectURI)
 			if err != nil {
 				return c.String(http.StatusUnauthorized, err.Error())
 			}
