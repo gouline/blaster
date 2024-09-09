@@ -2,6 +2,7 @@ include .env # Requires SLACK_CLIENT_ID and SLACK_CLIENT_SECRET
 
 IMAGE := blaster:latest
 
+export DEBUG ?= 1
 export HOST ?= localhost
 export PORT ?= 4000
 export CERT_FILE ?= certs/localhost.crt
@@ -9,11 +10,15 @@ export KEY_FILE ?= certs/localhost.key
 
 .PHONY: run
 run:
-	DEBUG=1 air
+	go run main.go
 
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: live
+live:
+	air
 
 .PHONY: docker-build
 docker-build:
