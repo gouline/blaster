@@ -17,9 +17,6 @@ FROM alpine:latest
 
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 
-ENV HOST=0.0.0.0
-ENV PORT=4000
-
 WORKDIR /app
 
 COPY static/ ./static/
