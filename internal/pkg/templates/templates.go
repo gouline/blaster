@@ -56,7 +56,7 @@ func New(config Config) (*Templates, error) {
 		}
 
 		t.templates[name] = template.Must(template.ParseFiles(layoutPath, path))
-		t.config.Logger.Info("compiled template", zap.String("path", path))
+		t.config.Logger.Info("compiled template", zap.String("name", name), zap.String("path", path))
 
 		return nil
 	})
@@ -67,6 +67,7 @@ func New(config Config) (*Templates, error) {
 	return t, nil
 }
 
+// Render implements [echo.Renderer] interface.
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	tmpl, ok := t.templates[name]
 	if !ok {

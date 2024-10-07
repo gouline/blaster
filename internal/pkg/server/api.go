@@ -9,14 +9,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// APISuggest handles /api/suggest.
+// handleAPISuggest handles /api/suggest.
 func (s *Server) handleAPISuggest(c echo.Context) error {
-	slackCtx := s.slack.Context(c)
-	if !slackCtx.Authorized {
-		return c.String(http.StatusUnauthorized, "no token")
+	session := s.session(c)
+	if !session.IsAuthenticated() {
+		return c.NoContent(http.StatusUnauthorized)
 	}
 
-	destinations, err := slackCtx.Destinations()
+	destinations, err := session.GetDestinations()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -28,8 +28,8 @@ func (s *Server) handleAPISuggest(c echo.Context) error {
 
 // handleAPISend handles /api/send.
 func (s *Server) handleAPISend(c echo.Context) error {
-	slackCtx := s.slack.Context(c)
-	if !slackCtx.Authorized {
+	session := s.session(c)
+	if !session.IsAuthenticated() {
 		return c.NoContent(http.StatusUnauthorized)
 	}
 
@@ -38,7 +38,7 @@ func (s *Server) handleAPISend(c echo.Context) error {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	if err := slackCtx.SendMessage(request.User, request.Message, request.AsUser); err != nil {
+	if err := session.PostMessage(request.User, request.Message, request.AsUser); err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 

@@ -2,9 +2,10 @@ package server
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
-	"github.com/gouline/blaster/internal/pkg/slack"
 	"github.com/gouline/blaster/internal/pkg/templates"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,6 +14,9 @@ import (
 
 const (
 	appName = "Blaster"
+
+	cookiePrefix  = "blaster_"
+	cookieSession = cookiePrefix + "session"
 )
 
 type Config struct {
@@ -35,7 +39,6 @@ type Config struct {
 type Server struct {
 	config Config
 	echo   *echo.Echo
-	slack  *slack.Slack
 }
 
 func New(config Config) (*Server, error) {
@@ -45,16 +48,11 @@ func New(config Config) (*Server, error) {
 		echo:   echo.New(),
 	}
 
-	s.echo.Debug = config.Debug
-
-	s.slack, err = slack.New(slack.Config{
-		Logger:       config.Logger,
-		ClientID:     config.SlackClientID,
-		ClientSecret: config.SlackClientSecret,
-	})
-	if err != nil {
-		return s, fmt.Errorf("failed to init Slack: %w", err)
+	if config.SlackClientID == "" || config.SlackClientSecret == "" {
+		return s, fmt.Errorf("missing Slack client credentials")
 	}
+
+	s.echo.Debug = config.Debug
 
 	s.echo.Use(middleware.Recover())
 	s.echo.Use(middleware.Gzip())
@@ -91,9 +89,10 @@ func New(config Config) (*Server, error) {
 	}
 
 	// Slack auth
-	s.echo.Use(s.slack.Middleware)
-	s.echo.GET("/login", s.slack.HandleLogin)
-	s.echo.GET("/logout", s.slack.HandleLogout)
+	s.echo.Use(s.middlewareAuth)
+	authGroup := s.echo.Group("/auth")
+	authGroup.GET("/login", s.handleAuthLogin)
+	authGroup.GET("/logout", s.handleAuthLogout)
 
 	// Pages
 	s.echo.GET("/", s.handleIndex)
@@ -109,7 +108,7 @@ func New(config Config) (*Server, error) {
 
 // Start starts HTTP or HTTPS server, depending on the presence of cert/key.
 func (s *Server) Start() error {
-	s.config.Logger.Info("Starting server",
+	s.config.Logger.Info("starting server",
 		zap.String("host", s.config.Host),
 		zap.String("port", s.config.Port),
 		zap.String("certFile", s.config.CertFile),
@@ -120,4 +119,19 @@ func (s *Server) Start() error {
 		return s.echo.StartTLS(addr, s.config.CertFile, s.config.KeyFile)
 	}
 	return s.echo.Start(addr)
+}
+
+// redirectURI creates a stable URI for redirects.
+// Removes query parameters and trailing slashes.
+func redirectURI(c echo.Context, uri string) string {
+	url, _ := url.Parse(uri)
+	url.RawQuery = ""
+	if url.Scheme == "" {
+		url.Scheme = c.Scheme()
+	}
+	if url.Host == "" {
+		url.Host = c.Request().Host
+	}
+	url.Path, _ = strings.CutSuffix(url.Path, "/")
+	return url.String()
 }
