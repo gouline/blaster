@@ -1,20 +1,23 @@
 package templates
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
-func Test_New(t *testing.T) {
+func TestNew(t *testing.T) {
 	templates, err := New(Config{
 		Logger:     zap.Must(zap.NewDevelopment()),
 		RootPath:   "examples",
 		LayoutFile: "layout.html",
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
+	if !assert.NoError(t, err) {
+		return
 	}
 
 	for _, test := range []struct {
@@ -34,22 +37,47 @@ func Test_New(t *testing.T) {
 			expected: true,
 		},
 	} {
-		tmpl, ok := templates.templates[test.name]
-		if ok != test.expected {
-			if test.expected {
-				t.Errorf("template %s expected but not found", test.name)
-			} else {
-				t.Errorf("template %s not expected but found", test.name)
-			}
-		}
-		if !ok {
-			continue
-		}
-
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
-		err := tmpl.Execute(rec, map[string]interface{}{})
-		if err != nil {
-			t.Errorf("template %s error: %s", test.name, err)
+		c := echo.New().NewContext(req, rec)
+
+		if err := templates.Render(rec, test.name, map[string]interface{}{}, c); test.expected {
+			assert.NoError(t, err, "template: %s", test.name)
+		} else {
+			assert.Error(t, err, "template: %s", test.name)
 		}
 	}
+}
+
+func TestNewChecks(t *testing.T) {
+	logger := zap.Must(zap.NewDevelopment())
+	var err error
+
+	_, err = New(Config{
+		Logger:     logger,
+		RootPath:   "examples1",
+		LayoutFile: "layout.html",
+	})
+	assert.ErrorContains(t, err, "root not found")
+
+	_, err = New(Config{
+		Logger:     logger,
+		RootPath:   "examples/about.html",
+		LayoutFile: "layout.html",
+	})
+	assert.ErrorContains(t, err, "root not directory")
+
+	_, err = New(Config{
+		Logger:     logger,
+		RootPath:   "examples",
+		LayoutFile: "layout.html1",
+	})
+	assert.ErrorContains(t, err, "layout not found")
+
+	_, err = New(Config{
+		Logger:     logger,
+		RootPath:   "examples",
+		LayoutFile: ".",
+	})
+	assert.ErrorContains(t, err, "layout is directory")
 }

@@ -1,13 +1,90 @@
 package server
 
 import (
-	"slices"
+	"errors"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gouline/blaster/internal/pkg/slack"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_sanitizeSearchTerm(t *testing.T) {
+func TestHandleAPIUnauthenticated(t *testing.T) {
+	for _, test := range []struct {
+		f func(r *requestTester) error
+	}{
+		{
+			func(r *requestTester) error {
+				return r.Server.handleAPISuggest(r.Context)
+			},
+		},
+		{
+			func(r *requestTester) error {
+				return r.Server.handleAPISend(r.Context)
+			},
+		},
+	} {
+		r := newRequestTester(http.MethodGet, "/", nil)
+		if assert.NoError(t, test.f(r)) {
+			assert.Equal(t, http.StatusUnauthorized, r.Response.Code)
+		}
+	}
+}
+
+func TestHandleAPISuggest(t *testing.T) {
+	r := newRequestTester(http.MethodGet, "/", nil)
+	r.Authenticate("1", "")
+
+	if assert.NoError(t, r.Server.handleAPISuggest(r.Context)) {
+		assert.Equal(t, http.StatusOK, r.Response.Code)
+	}
+}
+
+func TestHandleAPISuggestError(t *testing.T) {
+	r := newRequestTester(http.MethodGet, "/", nil)
+	r.Authenticate("1", "")
+	r.Session.GetDestinationsError = errors.New("simulated")
+
+	if assert.NoError(t, r.Server.handleAPISuggest(r.Context)) {
+		assert.Equal(t, http.StatusInternalServerError, r.Response.Code)
+		assert.Contains(t, r.Response.Body.String(), "simulated")
+	}
+}
+
+func TestHandleAPISend(t *testing.T) {
+	r := newRequestTester(http.MethodPost, "/", strings.NewReader("{\"user\":\"1\",\"message\":\"test\",\"as_user\":true}"))
+	r.Request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	r.Authenticate("1", "")
+
+	if assert.NoError(t, r.Server.handleAPISend(r.Context)) {
+		assert.Equal(t, http.StatusOK, r.Response.Code)
+	}
+}
+
+func TestHandleAPISendBindError(t *testing.T) {
+	r := newRequestTester(http.MethodPost, "/", strings.NewReader("{\"user:\"1\",\"message\":\"test\",\"as_user\":true}"))
+	r.Request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	r.Authenticate("1", "")
+
+	if assert.NoError(t, r.Server.handleAPISend(r.Context)) {
+		assert.Equal(t, http.StatusBadRequest, r.Response.Code)
+	}
+}
+
+func TestHandleAPISendError(t *testing.T) {
+	r := newRequestTester(http.MethodPost, "/", nil)
+	r.Authenticate("1", "")
+	r.Session.PostMessageError = errors.New("simulated")
+
+	if assert.NoError(t, r.Server.handleAPISend(r.Context)) {
+		assert.Equal(t, http.StatusInternalServerError, r.Response.Code)
+		assert.Contains(t, r.Response.Body.String(), "simulated")
+	}
+}
+
+func TestSanitizeSearchTerm(t *testing.T) {
 	for _, test := range []struct {
 		s        string
 		expected string
@@ -25,14 +102,11 @@ func Test_sanitizeSearchTerm(t *testing.T) {
 			expected: "测试字符串56",
 		},
 	} {
-		actual := sanitizeSearchTerm(test.s)
-		if actual != test.expected {
-			t.Errorf("for %s: got %s, expected %s", test.s, actual, test.expected)
-		}
+		assert.Equal(t, test.expected, sanitizeSearchTerm(test.s))
 	}
 }
 
-func Test_sanitizeCSV(t *testing.T) {
+func TestSanitizeCSV(t *testing.T) {
 	for _, test := range []struct {
 		s        string
 		expected string
@@ -54,14 +128,11 @@ func Test_sanitizeCSV(t *testing.T) {
 			expected: "something else",
 		},
 	} {
-		actual := sanitizeCSV(test.s)
-		if actual != test.expected {
-			t.Errorf("for %s: got %s, expected %s", test.s, actual, test.expected)
-		}
+		assert.Equal(t, test.expected, sanitizeCSV(test.s))
 	}
 }
 
-func Test_suggestionLabel(t *testing.T) {
+func TestSuggestionLabel(t *testing.T) {
 	for _, test := range []struct {
 		name        string
 		displayName string
@@ -88,14 +159,11 @@ func Test_suggestionLabel(t *testing.T) {
 			expected:    "mg",
 		},
 	} {
-		actual := suggestionLabel(test.name, test.displayName)
-		if actual != test.expected {
-			t.Errorf("for %s, %s: got %s, expected %s", test.name, test.displayName, actual, test.expected)
-		}
+		assert.Equal(t, test.expected, suggestionLabel(test.name, test.displayName), "name: %s", test.name)
 	}
 }
 
-func Test_suggestDestinations(t *testing.T) {
+func TestSuggestDestinations(t *testing.T) {
 	destinations := []*slack.Destination{
 		{
 			Type:        "user",
@@ -115,33 +183,57 @@ func Test_suggestDestinations(t *testing.T) {
 			DisplayName: "Mark Knopfler",
 			ID:          "mk",
 		},
+		{
+			Type:        "usergroup",
+			Name:        "developers",
+			DisplayName: "Developers",
+			ID:          "ug",
+			Children: []*slack.Destination{
+				{
+					Type:        "user",
+					Name:        "jane",
+					DisplayName: "Jane",
+					ID:          "jd",
+				},
+			},
+		},
 	}
 
 	for _, test := range []struct {
-		term        string
-		expectedIDs []string
+		term                string
+		expectedIDs         []string
+		expectedChildrenIDs []string
 	}{
 		{
-			term:        "mi",
-			expectedIDs: []string{"mg"},
+			term:                "mi",
+			expectedIDs:         []string{"mg"},
+			expectedChildrenIDs: []string{},
 		},
 		{
-			term:        "mark",
-			expectedIDs: []string{"mark", "mk"},
+			term:                "mark",
+			expectedIDs:         []string{"mark", "mk"},
+			expectedChildrenIDs: []string{},
 		},
 		{
-			term:        "kno",
-			expectedIDs: []string{"mk"},
+			term:                "kno",
+			expectedIDs:         []string{"mk"},
+			expectedChildrenIDs: []string{},
+		},
+		{
+			term:                "dev",
+			expectedIDs:         []string{"ug"},
+			expectedChildrenIDs: []string{"jd"},
 		},
 	} {
-		actuals := suggestDestinations(test.term, destinations)
 		actualValues := []string{}
-		for _, actual := range actuals {
+		actualChildren := []string{}
+		for _, actual := range suggestDestinations(test.term, destinations) {
 			actualValues = append(actualValues, actual.Value)
+			for _, child := range actual.Children {
+				actualChildren = append(actualChildren, child.Value)
+			}
 		}
-
-		if !slices.Equal(actualValues, test.expectedIDs) {
-			t.Errorf("for %s: got %s, expected %s", test.term, actualValues, test.expectedIDs)
-		}
+		assert.Equal(t, test.expectedIDs, actualValues, "term: %s:", test.term)
+		assert.Equal(t, test.expectedChildrenIDs, actualChildren, "term: %s:", test.term)
 	}
 }

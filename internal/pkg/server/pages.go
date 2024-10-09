@@ -22,6 +22,6 @@ func (s *Server) handleNotFound(c echo.Context) error {
 }
 
 func (s *Server) baseData(c echo.Context, data map[string]interface{}) map[string]interface{} {
-	data["slack"] = s.slack.Context(c)
+	data["slack"] = s.session(c)
 	return data
 }
